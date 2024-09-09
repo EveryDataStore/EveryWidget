@@ -1,0 +1,12 @@
+en:
+   EveryWidget\Model\EveryWidget:
+        ACTIVE: 'Active'
+        TITLE: 'Title'
+        DESCRIPTION: 'Description'
+        SORT: 'Sort'
+        GROUPS: 'Groups'
+        CONFIGURATIONS: 'Configurations'
+        TYPE: 'Type'
+       
+       
+        

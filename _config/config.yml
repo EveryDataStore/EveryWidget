@@ -1,0 +1,50 @@
+app_everydefaultfolder:
+    Menu:
+        Active: true
+        Title: 'Widgets'
+        PrimeryMenu: false
+        AdminMenu: true
+        UserMenu: false
+        Controller: 'EveryWidget'
+        Icon: 'fa fa-th'
+EveryWidget\Model\EveryWidget:
+    Types:
+        modelGrid: 'Model Grid'
+        recordGrid: 'Record Grid'
+        weather: 'Weather'
+        clock: 'Clock'
+        featuredInfoBox: 'Featured Info Box'
+        modelCount: 'Model Count'
+        recordCount: 'Record Count'
+        linearChart: 'Linear Chart'
+        barChart: 'Bar Chart'
+        pieChart: 'Pie Chart'
+        doughnutChart: 'Doughnut Chart'
+        polarAreaChart: 'Polar Area Chart'
+        lastLogin: 'Last login'
+    API_Filter_DataStoreID_Map: 'DataStoreID'
+    API_View_Fields:
+        - Slug
+        - Active
+        - Type
+        - Title()
+        - Description
+        - Sort
+        - WidgetData()
+    API_Create_Fields:
+        - Active
+        - Type
+        - Title
+        - Description
+        - Sort
+    API_Edit_Fields:
+        - Active
+        - Type
+        - Title
+        - Description
+        - Sort
+    API_Dataobject_Allowed_Realations:
+        - Groups
+        - Configurations  
+API_Namespace_Class_Map:
+    EveryWidget: 'EveryWidget\Model\EveryWidget'

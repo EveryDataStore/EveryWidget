@@ -1,0 +1,12 @@
+ar:
+   EveryWidget\Model\EveryWidget:
+        ACTIVE: 'فعال'
+        TITLE: 'الاسم'
+        DESCRIPTION: 'وصف'
+        SORT: 'ترتيب'
+        GROUPS: 'مجموعات'
+        CONFIGURATIONS: 'تكوينات'
+        TYPE: 'نوع'
+       
+       
+        
