@@ -13,6 +13,7 @@ use Http\Factory\Guzzle\RequestFactory;
 use Http\Adapter\Guzzle6\Client as GuzzleAdapter;
 use SilverStripe\Core\ClassInfo;
 use SilverStripe\Versioned\Versioned;
+use SilverStripe\Assets\File;
 
 
 /** EveryDataStore/EveryWidget v1.0
@@ -32,6 +33,7 @@ class EveryWidgetHelper extends EveryDataStoreHelper {
      */
     public static function modelGridData($widget) {
         $conf =  self::getWidgetConfig($widget->Configurations(), 'widget_modelgrid_');
+        if(!$conf) return;
         $title = isset($conf['title']) ? $conf['title']: null;
         $name = isset($conf['name']) ? $conf['name']: null;
         $filter =  isset($conf['filter']) ? $conf['filter']: [];
@@ -72,13 +74,15 @@ class EveryWidgetHelper extends EveryDataStoreHelper {
      */
     public static function recordGridData($widget) {
         $conf =  self::getWidgetConfig($widget->Configurations(), 'widget_recordsetgrid_');
+        if(!$conf) return;
         $title = isset($conf['title']) ? $conf['title']: null;
         $slug = isset($conf['slug']) ? $conf['slug']: null;
         $fields = isset($conf['fields']) ? $conf['fields']: null;
         $filter = isset($conf['filter']) ? $conf['filter']: null;
         $limit = isset($conf['limit']) ? $conf['limit']: null;
-    
-        return self::getRecordData($slug, $fields, $filter, $limit);
+        $sortcolumn =  isset($conf['sortcolumn']) ? $conf['sortcolumn']: 'Created';
+        $sortdir =   isset($conf['sortdir']) ? $conf['sortdir']: 'DESC';
+        return self::getRecordData($slug, $fields, [], $filter, $limit, $sortcolumn, $sortdir);
     }
     
   
@@ -118,10 +122,11 @@ class EveryWidgetHelper extends EveryDataStoreHelper {
      * @return array
      */
     public static function featuredInfoBoxData($widget) {
-        $config = self::getWidgetConfig($widget->Configurations(), 'widget_featuredInfoBoxData');
-        if ($config) {
-            $item_slug = $config['item_slug'];
-            $field_slug = $config['field_slug'];
+        $conf = self::getWidgetConfig($widget->Configurations(), 'widget_featuredInfo');
+        if(!$conf) return;
+        if ($conf) {
+            $item_slug = $conf['item_slug'];
+            $field_slug = $conf['field_slug'];
             $recordSetItem = RecordSetItem::get()->filter(['Slug' => $item_slug])->first();
             if ($recordSetItem) {
                 $recordSetItemData = RecordSetItemData::get()->filter(['RecordSetItem.Slug' => $recordSetItem->Slug, 'FormField.Slug' =>  $field_slug])->first();
@@ -147,6 +152,7 @@ class EveryWidgetHelper extends EveryDataStoreHelper {
      */
     public static function modelCountData($widget) {
         $conf = self::getWidgetConfig($widget->Configurations(), 'widget_modelcount_');
+        if(!$conf) return;
         $name = isset($conf['name']) ? $conf['name'] : null;
         $filter = isset($conf['filter']) ? $conf['filter'] : null;
         $fields = isset($conf['fields']) ? $conf['fields'] : null;
@@ -193,6 +199,7 @@ class EveryWidgetHelper extends EveryDataStoreHelper {
      */
     public static function recordCountData($widget) {
         $conf = self::getWidgetConfig($widget->Configurations(), 'widget_recordsetcount_');
+        if(!$conf) return;
         $recordSetSlug = isset($conf['slug']) ? $conf['slug'] : null;
         $filter = isset($conf['filter']) ? $conf['filter'] : null;
         $fields = isset($conf['fields']) ? $conf['fields'] : null;
@@ -200,7 +207,7 @@ class EveryWidgetHelper extends EveryDataStoreHelper {
         $suffix = isset($conf['suffix']) ? $conf['suffix'] : null;
         $prefix = isset($conf['prefix']) ? $conf['prefix'] : null;
         $countOption = isset($conf['count_option']) ? $conf['count_option'] : null;
-        $items = self::getRecordData($recordSetSlug, $fields, $filter, 10000);
+        $items = self::getRecordData($recordSetSlug, $fields, [], $filter, 10000);
         if ($items && isset($items['Items'])) {
             $count = 0;
             if ($countOption == 'count') {
@@ -234,18 +241,16 @@ class EveryWidgetHelper extends EveryDataStoreHelper {
      * @return array
      */
     public static function linearChartData($widget) {
-        $config      = self::getWidgetConfig($widget->Configurations(), 'widget_linearChart');
-        $dataset    = isset($config['dataset']) ? $config['dataset']: null;;
-        $interval    = isset($config['interval']) ? $config['interval']: null;
-
+        $conf      = self::getWidgetConfig($widget->Configurations(), 'widget_linearChart');
+        if(!$conf) return;
+        $dataset = isset($conf['dataset']) ? $conf['dataset'] : null;
+        $interval = isset($conf['interval']) ? $conf['interval'] : null;
         return array(
-            'labels' =>  self::getLabelsbyInterval($interval['interval'], $interval['intervalType']) ,
+            'labels' => $interval && isset($interval['interval']) ? self::getLabelsbyInterval($interval['interval'], $interval['intervalType']): self::getLabelsFromDataset($dataset),
             'datasets' => self::getChartDatasets($dataset, $widget->Type, $interval)
-            );
-         
-          
-        /*
-          return array(
+        );
+
+        /*  return array(
                 array(
                     'label' => 'First Dataset',
                     'data' => array(65, 59, 80, 81, 56, 55, 40),
@@ -276,14 +281,14 @@ class EveryWidgetHelper extends EveryDataStoreHelper {
      * @return array
      */    
     public static function barChartData($widget) {
-        $config = self::getWidgetConfig($widget->Configurations(), 'widget_barChart');
-        $dataset    = isset($config['dataset']) ? $config['dataset']: null;;
-        $interval    = isset($config['interval']) ? $config['interval']: null;
-
+        $conf = self::getWidgetConfig($widget->Configurations(), 'widget_barChart');
+        if(!$conf) return;
+        $dataset = isset($conf['dataset']) ? $conf['dataset'] : null;
+        $interval = isset($conf['interval']) ? $conf['interval'] : null;
         return array(
-            'labels' =>  self::getLabelsbyInterval($interval['interval'], $interval['intervalType']) ,
+            'labels' => $interval && isset($interval['interval']) ? self::getLabelsbyInterval($interval['interval'], $interval['intervalType']): self::getLabelsFromDataset($dataset),
             'datasets' => self::getChartDatasets($dataset, $widget->Type, $interval)
-            );
+        );
 
        /* return array(
             'labels' => array('January', 'February', 'March', 'April', 'May', 'June', 'July'),
@@ -311,14 +316,14 @@ class EveryWidgetHelper extends EveryDataStoreHelper {
      * @return array
      */
     public static function pieChartData($widget) {
-        $config = self::getWidgetConfig($widget->Configurations(), 'widget_pieChart');
-        $dataset    = isset($config['dataset']) ? $config['dataset']: null;;
-        $interval    = isset($config['interval']) ? $config['interval']: null;
-
+        $conf = self::getWidgetConfig($widget->Configurations(), 'widget_pieChart');
+        if(!$conf) return;
+        $dataset = isset($conf['dataset']) ? $conf['dataset'] : null;
+        $interval = isset($conf['interval']) ? $conf['interval'] : null;
         return array(
-            'labels' =>  self::getLabelsbyInterval($interval['interval'], $interval['intervalType']) ,
+            'labels' => $interval && isset($interval['interval']) ? self::getLabelsbyInterval($interval['interval'], $interval['intervalType']): self::getLabelsFromDataset($dataset),
             'datasets' => self::getChartDatasets($dataset, $widget->Type, $interval)
-            );
+        );
     }
 
     /**
@@ -327,12 +332,12 @@ class EveryWidgetHelper extends EveryDataStoreHelper {
      * @return array
      */
     public static function polarAreaChartData($widget) {
-        $config = self::getWidgetConfig($widget->Configurations(), 'widget_polarAreaChart');
-        $dataset = isset($config['dataset']) ? $config['dataset'] : null;
-        $interval = isset($config['interval']) ? $config['interval'] : null;
-
+        $conf = self::getWidgetConfig($widget->Configurations(), 'widget_polarAreaChart');
+        if(!$conf) return;
+        $dataset = isset($conf['dataset']) ? $conf['dataset'] : null;
+        $interval = isset($conf['interval']) ? $conf['interval'] : null;
         return array(
-            'labels' => self::getLabelsbyInterval($interval['interval'], $interval['intervalType']),
+            'labels' => $interval && isset($interval['interval']) ? self::getLabelsbyInterval($interval['interval'], $interval['intervalType']): self::getLabelsFromDataset($dataset),
             'datasets' => self::getChartDatasets($dataset, $widget->Type, $interval)
         );
     }
@@ -343,11 +348,13 @@ class EveryWidgetHelper extends EveryDataStoreHelper {
      * @return array
      */
     public static function doughnutChartData($widget) {
-        $config = self::getWidgetConfig($widget->Configurations(), 'widget_doughnutChart');
-        $dataset = isset($config['dataset']) ? $config['dataset'] : null;
-        $interval = isset($config['interval']) ? $config['interval'] : null;
+        $conf = self::getWidgetConfig($widget->Configurations(), 'widget_doughnutChart');
+        if(!$conf) return;
+        
+        $dataset = isset($conf['dataset']) ? $conf['dataset'] : null;
+        $interval = isset($conf['interval']) ? $conf['interval'] : null;
         return array(
-            'labels' => self::getLabelsbyInterval($interval['interval'], $interval['intervalType']),
+            'labels' => $interval && isset($interval['interval']) ? self::getLabelsbyInterval($interval['interval'], $interval['intervalType']): self::getLabelsFromDataset($dataset),
             'datasets' => self::getChartDatasets($dataset, $widget->Type, $interval)
         );
     }
@@ -365,7 +372,7 @@ class EveryWidgetHelper extends EveryDataStoreHelper {
           
             $httpRequestFactory = new RequestFactory();
             $httpClient = GuzzleAdapter::createWithConfig([]);
-            $owm = new OpenWeatherMap('9aa24362c5f260a27ffcbdb212609af6', $httpClient, $httpRequestFactory);
+            $owm = new OpenWeatherMap('{}', $httpClient, $httpRequestFactory);
             //$lang = 'de';
             //$units = 'metric';
             $weather = $owm->getWeather($config[0]['location'], $config[0]['unit'], self::getMemberLanguageCode());
@@ -441,7 +448,7 @@ class EveryWidgetHelper extends EveryDataStoreHelper {
      * @param DataObject $widget
      * @return array
      */
-    public static function lastLoginData($widget) {
+    public static function lastLoginData($slug) {
         $lastLogin = self::getMemberLastLogin();
         if ($lastLogin) {
             return array(
@@ -461,17 +468,25 @@ class EveryWidgetHelper extends EveryDataStoreHelper {
      * @param integer $limit
      * @return array
      */
-    public static function getRecordData($slug, $fields = [], $filter = [], $limit = 10000, $recordSetItemFilter = []) {
+    public static function getRecordData($slug, $fields = [], $filter1 = [], $filter2 = [], $limit = 10000, $sortcolumn = "Created", $sortdir = "ASC" ) {
        $recordSet = Versioned::get_by_stage('EveryDataStore\Model\RecordSet\RecordSet', Versioned::LIVE)->filter(['Slug' => $slug, 'Active' => true, 'DataStoreID' => self::getCurrentDataStoreID()])->first();
         if ($recordSet) {
             $labels = $recordSet->RecordResultlistLabels();
-            $items = $recordSet->getNiceItems()->filter($recordSetItemFilter)->Sort('Created DESC')->limit($limit);
+            $items = $recordSet->getNiceItems();
+            if($filter1){
+              $items =  $items->filter($filter1);
+            }
+            if($filter2){
+              $items = $items->filter($filter2);
+            }
+            $items = $items->Sort($sortcolumn, $sortdir)->limit($limit);
+            
             $niceItems = [];
             $fieldsFilter = [
                     'FormField.Slug' => $fields,
                     'Value:not' => [null, '']
                 ];
-        
+
             foreach ($items as $item) {
                 $itemData = $fields ? $item->ItemData()->filter($fieldsFilter)->Sort("ID DESC") : $item->ItemData()->Sort("ID DESC");
                 $niceItemData = [];
@@ -519,12 +534,17 @@ class EveryWidgetHelper extends EveryDataStoreHelper {
      * @param string $slug
      * @return array
      */
-    public static function getWidgetData($slug){
-        $filePath = ASSETS_PATH.'/.protected/'.self::getCurrentDataStore()->Folder()->Filename . 'widgets.json';
-        if(file_exists($filePath)){
-            $content = json_decode(file_get_contents($filePath), true);
-            if(isset($content[$slug])){
-                return $content[$slug];
+    public static function getWidgetData($slug, $type = null) {
+        if($type == 'lastLogin'){
+            return self::lastLoginData($slug);
+        }
+        $widgetsFile = ASSETS_PATH . '/.protected/'.str_replace(' ', '-',self::getCurrentDataStore()->Folder()->Filename).'widgets.json';
+        if ($widgetsFile) {
+            if (file_exists($widgetsFile)) {
+                $content = json_decode(file_get_contents($widgetsFile), true);
+                if (isset($content[$slug])) {
+                    return $content[$slug];
+                }
             }
         }
     }
@@ -537,7 +557,12 @@ class EveryWidgetHelper extends EveryDataStoreHelper {
      */
     private static function getWidgetConfig($widgetConfigs, $configName) {
         if (!empty($widgetConfigs)) {
+            /*if($widgetConfigs->first()->Value && $widgetConfigs->first()->Value){
+                return self::isJson($widgetConfigs->first()->Value) ? json_decode($widgetConfigs->first()->Value, true) : null;
+            }*/
+            
             $config = $widgetConfigs->filter(['Title:StartsWith' => $configName, 'DataStoreID' => self::getCurrentDataStoreID()])->first();
+
             if ($config) {
                 return self::isJson($config->Value) ? json_decode($config->Value, true) : $config->Value;
             }
@@ -573,18 +598,20 @@ class EveryWidgetHelper extends EveryDataStoreHelper {
      * This function returns for Record data either a number of record items or 
      * a sum of total values in record items
      * @param array $config
+     * @param array $args
      * @return array
      */
-    private static function getChartData($config) {
+    private static function getChartData($config, $args = []) {
         $ret = [];
+        $i=0;
         foreach ($config as $c) {
             if ($c['dataType'] == 'RecordSet') {
-                $ret[] = self::getChartRecordData($c);
+                $ret[] = self::getChartRecordData($c, $args, $i);
             } else {
-                $ret[] = self::getChartModelData($c);
+                $ret[] = self::getChartModelData($c, $args, $i);
             }
+            $i++;
         }
-       
         //self::pr($ret);
         return $ret;
     }
@@ -595,42 +622,50 @@ class EveryWidgetHelper extends EveryDataStoreHelper {
      * @param array $args
      * @return array
      */
-    private static function getChartComplextData($config, $args) {
+    private static function getChartComplextData($conf, $args) {
         $ret = [];
-        $labels = self::getLabelsbyInterval($args['interval'], $args['intervalType'], true);
-        foreach ($labels as $label) {
-            $filter = [];
-            if ($args['intervalType'] == 'month') {
-                $month = (int)$label > 9 ? '0'.$label : $label;
-                $monthDays = cal_days_in_month(CAL_GREGORIAN, $label, date('Y'));
-                $filter = ['Created:GreaterThanOrEqual' => date('Y') . '-' . $month . '-01', 'Created:LessThanOrEqual' => date('Y') . '-' . $month . '-'.$monthDays];
+        
+        for($i = 0; $i <= $args['interval']; $i++) {
+            $itemsfilter = [];
+             if ($args['intervalType'] == 'month') {
+                $itemsfilter = ['Created:GreaterThanOrEqual' => date('Y-m-01', strtotime('-'.$i.' month')), 'Created:LessThanOrEqual' => date('Y-m-t', strtotime(date('Y-m', strtotime('-'.$i.' month'))))];
             } elseif ($args['intervalType'] == 'year') {
-                $filter = ['Created:GreaterThanOrEqual' => date('Y') . '-01-01', 'Created:LessThanOrEqual' => date('Y') . '-12-31'];
-            } elseif ($args['intervalType'] == 'day') {
-                $filter = ['Created:GreaterThanOrEqual' => date('Y') . '-' . date("t") . '-' . $label . ' 00:00:01', 'Created:LessThanOrEqual' => date('Y') . '-' . date("t") . '-' . $label . ' 23:59:59'];
-            }
-
-            if ($config['dataType'] == 'RecordSet') {
-                $ret[] = self::getChartRecordData($config, $filter);
+                $itemsfilter = ['Created:GreaterThanOrEqual' => date('Y-01-01', strtotime('-'.$i.' year')), date('Y-12-31', strtotime('-'.$i.' year'))];
             } else {
-                $ret[] = self::getChartModelData($config, $filter);
+                $itemsfilter = ['Created:GreaterThanOrEqual' => date('Y-m-d 00:00:01', strtotime('-'.$i.' day')), 'Created:LessThanOrEqual' => date('Y-m-d 23:59:59', strtotime('-'.$i.' day'))];
+            }
+           
+            if ($conf['dataType'] == 'RecordSet') {
+                $ret[] = self::getChartRecordData($conf,$args, $i, $itemsfilter);
+            } else {
+                $ret[] = self::getChartModelData($conf, $itemsfilter);
             }
         }
-
+        
+        
         return $ret;
     }
 
     /**
      * This function returns either a number of record items or a sum of total values in record items
-     * @param array $config
-     * @param array $filter
+     * @param array $conf
+     * @param array $args
+     * @param integer $index
      * @return float
      */
-    private static function getChartRecordData($config, $recordSetItemFilter = []) {
-        $limit = $config && isset($config['limit'])  ? $config['limit']: 10000;
-        $recordSetData = self::getRecordData($config['dataSrcSlug'], $config['fields'], $config['filter'], $limit, $recordSetItemFilter);
+    private static function getChartRecordData($conf, $args = [], $index = 0, $itemsFilter = []) {
+        $slug = isset($conf['slug']) ? $conf['slug']: null;
+        $fields = isset($conf['fields']) ? $conf['fields']: null;
+        $filter = isset($conf['filter']) && !empty($conf['filter'])? ($conf['filter']): self::getFilterFromInterval($args)[$index];
+        $sortcolumn =  isset($conf['sortcolumn']) ? $conf['sortcolumn']: 'Created';
+        $sortdir =   isset($conf['sortdir']) ? $conf['sortdir']: 'DESC';
+        $limit = $conf && isset($conf['limit'])  ? $conf['limit']: 10000;
+        $countOption = $conf && isset($conf['countOption'])  ? $conf['countOption']: 'count';
+        $sum = 0;
+
+        $recordSetData = self::getRecordData($slug, $fields, $itemsFilter, $filter, $limit, $sortcolumn, $sortdir);
         if ($recordSetData && isset($recordSetData['Items'])) {
-            if (strtolower($config['countOption']) == 'count') {
+            if ($countOption == 'count') {
                 return count($recordSetData['Items']);
             } else {
                 $sum = 0;
@@ -661,25 +696,25 @@ class EveryWidgetHelper extends EveryDataStoreHelper {
         if ($type == 'doughnutChart' || $type =='pieChart' || $type == 'polarAreaChart') {
             return array(
                 array(
-                    'data' =>  self::getChartData($config, $type),
+                    'data' =>  self::getChartData($config, $args),
                     'backgroundColor' => self::getChartConfigProperty($config, 'backgroundColor'),
                     'hoverBackgroundColor' => self::getChartConfigProperty($config, 'hoverBackgroundColor'),
                 )
             );
         }else if($type == 'linearChart' || $type == 'barChart'){
+           
            $dataset = [];
            foreach ($config as $c){
                $dataset[] = 
                   array(
-                    'label' => $c['name'],
+                    'label' => $c['label'],
                     'data' => self::getChartComplextData($c, $args),
-                    'fill' => isset($c['fill']) ? $c['fill'] : false,
+                    'fill' => isset($c['fill']) && $c['fill'] == 'true' ? true : false,
                     'backgroundColor' => isset($c['backgroundColor']) ? $c['backgroundColor'] : 'rgb(0, 0, 0)',
                     'borderColor' => isset($c['borderColor']) ? $c['borderColor'] : 'rgb(255,255,255)',
                     
                );
-           }
-                      
+           }        
           return $dataset;
         }
     }
@@ -696,24 +731,54 @@ class EveryWidgetHelper extends EveryDataStoreHelper {
   
         setlocale(LC_TIME, self::getMember()->Locale);
         if ($type == 'year') {
-            $year = (int) date('Y');
-            $start = $year - $interval;
-            for ($i = $start; $i <= $year; $i++) {
-                $labels[] = $i;
+            for($y=0; $y<=$interval; $y++ ){
+                $labels[] = date ('y', strtotime ( '-'.$y.' month' , strtotime ( date('Y-m-d') )));
             }
         } else if ($type == 'month' && $interval <= 12) {
-            for($i=1; $i<=$interval; $i++ ){
-                $labels[] = date ('m', strtotime ( '-'.$i.' month' , strtotime ( date('Y-m-d') )));
+            for($m=0; $m<=$interval; $m++ ){
+                $labels[] = date ('m', strtotime ( '-'.$m.' month' , strtotime ( date('Y-m-d') ))).'/'.date ('Y', strtotime ( '-'.$m.' month' , strtotime ( date('Y-m-d') )));
             }
         } else {
-            $start = $interval < date("t") ? date("t") - $interval : 1;
-            for ($i = $start; $i <= $interval; $i++) {
-                $labels[] = $i;
+            for($d=0; $d<=$interval; $d++ ){
+                $labels[] = date ('d', strtotime ( '-'.$d.' day' , strtotime ( date('Y-m-d') ))).'/'.date ('m/Y', strtotime ( '-'.$d.' days' , strtotime ( date('Y-m-d') )));;
             }
         }
-
-        return array_reverse($labels);
+        
+        #return array_reverse($labels);
+        return $labels;
     }
     
+    /**
+     * This function returns a list of labels from config
+     * @param array $config
+     * @return array
+     */
+    private static function getLabelsFromDataset($config) {
+        $labels = [];
+  
+        foreach($config as $c){
+            $labels[] = isset($c['label']) ? $c['label'] : '';
+        }
+        
+        return $labels;
+    }
     
+    /**
+     * This function returns nice filter for DataObject filtering
+     * @param array $args
+     * @return array
+     */
+    private static function getFilterFromInterval($args) {
+        $filter = [];
+        for ($i = 0; $i <= $args['interval']; $i++) {
+            if ($args['intervalType'] == 'month') {
+                $filter[] = ['Created:GreaterThanOrEqual' => date('Y-m-01', strtotime('-'.$i.' month')), 'Created:LessThanOrEqual' => date('Y-m-t', strtotime(date('Y-m', strtotime('-'.$i.' month'))))];
+            } elseif ($args['intervalType'] == 'year') {
+                $filter[] = ['Created:GreaterThanOrEqual' => date('Y-01-01', strtotime('-'.$i.' year')), date('Y-12-31', strtotime('-'.$i.' year'))];
+            } else {
+                $filter[] = ['Created:GreaterThanOrEqual' => date('Y-m-d 00:00:01', strtotime('-'.$i.' day')), 'Created:LessThanOrEqual' => date('Y-m-d 23:59:59', strtotime('-'.$i.' day'))];
+            }
+        }
+        return $filter;
+    }
 }

@@ -12,7 +12,6 @@ use SilverStripe\Forms\TextField;
 use SilverStripe\Forms\DropdownField;
 use SilverStripe\Forms\CheckboxField;
 use SilverStripe\Forms\HiddenField;
-use SilverStripe\Forms\ListboxField;
 use SilverStripe\Security\PermissionProvider;
 use SilverStripe\Core\ClassInfo;
 
@@ -120,7 +119,7 @@ class EveryWidget extends DataObject implements PermissionProvider
     
     public function WidgetData() {
        if($this->Type && $this->ID > 0){
-            return EveryWidgetHelper::getWidgetData($this->Slug);
+            return EveryWidgetHelper::getWidgetData($this->Slug, $this->Type);
         }
         
     }
@@ -132,6 +131,9 @@ class EveryWidget extends DataObject implements PermissionProvider
      * @return bool True if the the member is allowed to do the given action
      */
     public function canView($member = null) {
+        if(($this->Groups()->Count() > 0) && !EveryWidgetHelper::isMemberInGroups($this->Groups())){
+            return false;
+        }
         return EveryWidgetHelper::checkPermission(EveryWidgetHelper::getNicePermissionCode("VIEW", $this));
     }
 

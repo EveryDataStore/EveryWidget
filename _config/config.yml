@@ -22,6 +22,8 @@ EveryWidget\Model\EveryWidget:
         doughnutChart: 'Doughnut Chart'
         polarAreaChart: 'Polar Area Chart'
         lastLogin: 'Last login'
+        timeTracker: 'Time Tracker'
+        uploadButton: 'Upload Button'
     API_Filter_DataStoreID_Map: 'DataStoreID'
     API_View_Fields:
         - Slug
