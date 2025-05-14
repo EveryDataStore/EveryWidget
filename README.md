@@ -1,10 +1,7 @@
 # EveryWidget #
 
-This is a submodule of [EveryDataStore ECM](https://everydatastore.org) project which defines EveryTranslator app and its features.
-
-The EveryWidget app enables designing of the Dashboard by reordering, activating or deactivating existing widgets, or by creating new ones. 
-It also enables organizing widgets to adjust the appearance of the Dashboard to specific group needs.
-
+A submodule of [EveryDataStore ECM](https://everydatastore.org) that provides the EveryWidget app. 
+It allows users to customize the Dashboard by reordering, toggling, or creating widgets to fit specific group needs.
 
 ## Requirements ##
 [EveryDataStoreBackend](https://github.com/EveryDataStore/EveryDataStoreBackend)<br/>

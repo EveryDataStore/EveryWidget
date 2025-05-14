@@ -1,0 +1,22 @@
+{
+  "name": "everydatastore/everywidget",
+  "description": "A submodule of EveryDataStore ECM that provides the EveryWidget app. It allows users to customize the Dashboard by reordering, toggling, or creating widgets to fit specific group needs.",
+  "type": "silverstripe-vendormodule",
+  "homepage": "https://everydatastore.org/en/apps/everywidget",
+  "authors": [
+    {
+      "name": "EveryDataStore GmbH"
+    }
+  ],
+  "require": {
+    "php": "^8.1",
+    "everydatastore/everydatastorebackend": "^1.5.2"
+  },
+  "autoload": {
+    "psr-4": {
+      "EveryWidget\\": "src/"
+    }
+  },
+  "minimum-stability": "stable",
+  "prefer-stable": true
+}
